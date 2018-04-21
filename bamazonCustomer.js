@@ -1,17 +1,57 @@
-var request = require("request");
 var mysql = require("mysql");
+var inquirer = require("inquirer");
 
-// Running this application will first display all of the items available for sale. Include the ids, names, and prices of products for sale.
-// The app should then prompt users with two messages.
+var connection = mysql.createConnection({
+    host: "localhost",
+    port: 3306,
+    user: "root",
+    password: "",
+    database: "bamazonDB"
+});
 
-// The first should ask them the ID of the product they would like to buy.
-// The second message should ask how many units of the product they would like to buy.
+connection.connect(function (err) {
+    if (err) throw err;
+    displayItems();
+});
 
-// Once the customer has placed the order, your application should check if your store has enough of the product to meet the customer's request.
+function displayItems() {
+    connection.query("SELECT * FROM products", function (err, res) {
+        if (err) throw err;
 
-// If not, the app should log a phrase like Insufficient quantity!, and then prevent the order from going through.
+        res.forEach(function (item) {
+            console.log(`${item.id} ${item.product_name}, $${item.price}`);
+        });
+    });
+    promptCustomer();
+}
 
-// However, if your store does have enough of the product, you should fulfill the customer's order.
+function promptCustomer() {
+    iquirer.prompt([
+        {
+            name: "product",
+            type: "input",
+            message: "Please give the id of the item you would like to buy."
+            //add validation, maybe change input to available types
+        },
+        {
+            name: "product",
+            type: "units",
+            message: "How many units of this item would you like to buy?"
+            //add validation
+        }
+    ])
+        .then(function (answer) {
+            // check if your store has enough of the product 
+                //select stock quantity by id from products, if >= units then continue
+            // If not, the app should log a phrase like Insufficient quantity!, and then prevent the order from going through.
 
-// This means updating the SQL database to reflect the remaining quantity.
-// Once the update goes through, show the customer the total cost of their purchase.
+            // However, if your store does have enough of the product...
+            // This means updating the SQL database to reflect the remaining quantity
+                //update item by id and make stock_quantity = to current - units
+            // Once the update goes through, show the customer the total cost of their purchase.
+                //console log units * item price
+        });
+}
+
+
+
