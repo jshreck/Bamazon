@@ -118,7 +118,7 @@ function addInventory() {
                     ],
                     function (err, res) {
                         if (err) throw err;
-                        console.log (`Successfully added inventory to item id ${id}, ${name}. Quantity now in stock: ${newStock}`);
+                        console.log(`Successfully added inventory to item id ${id}, ${name}. Quantity now in stock: ${newStock}`);
                         next();
                     });
             });
@@ -127,15 +127,47 @@ function addInventory() {
 
 //allow user to add new product
 function newProduct() {
+    inquirer.prompt([
+        {
+            name: "product_name",
+            type: "input",
+            message: "\nWhat is the name of the item you would like to add?",
+        },
+        {
+            name: "department_name",
+            type: "input",
+            message: "\nWhat department should this item be in?",
+        },
+        {
+            name: "price",
+            type: "input",
+            message: "\nWhat is the price of the item?",
+        },
+        {
+            name: "stock_quantity",
+            type: "input",
+            message: "\nHow many units would you like to add to inventory?",
+            validate: isNum
+        },
+    ])
+        .then(function (answers) {
 
-    //allow the manager to add a completely new product to the store
-    //prompt for name of product, department, price, and quantity -> then add new row to table
-    //validate item (name) doesn't already exist?
 
-
-    next();
+            //SOME SORT OF ERROR HERE
+            connection.query("INSERT INTO products SET ?",
+                {
+                    product_name: answers.product_name, 
+                    department_name: answers.department_name, 
+                    price: answers.price, 
+                    stock_quantity: answers.stock_quantity
+                },
+                function (err, res) {
+                    if (err) throw err;
+                    console.log(`Successfully added new item to inventory`);
+                    next();
+                });   
+        });
 }
-
 
 //ask if user want to do something else or want to exit
 function next() {
