@@ -21,35 +21,59 @@ function displayItems() {
         res.forEach(function (item) {
             console.log(`${item.id} ${item.product_name}, $${item.price}`);
         });
+        promptCustomer();
     });
-    promptCustomer();
+}
+
+//for validating answers in promptCustomer()
+function isNum(num) {
+    return (isNaN(parseInt(num)) ? "Please type in an integer" : true);
 }
 
 function promptCustomer() {
-    iquirer.prompt([
-        {
-            name: "product",
-            type: "input",
-            message: "Please give the id of the item you would like to buy."
-            //add validation, maybe change input to available types
-        },
-        {
-            name: "product",
-            type: "units",
-            message: "How many units of this item would you like to buy?"
-            //add validation
-        }
-    ])
-        .then(function (answer) {
-            // check if your store has enough of the product 
-                //select stock quantity by id from products, if >= units then continue
-            // If not, the app should log a phrase like Insufficient quantity!, and then prevent the order from going through.
+    inquirer.prompt
+        ([
+            {
+                name: "product",
+                type: "input",
+                message: "Please give the id of the item you would like to buy.",
+                validate: isNum
+            },
+            {
+                name: "unit",
+                type: "input",
+                message: "How many units of this item would you like to buy?",
+                validate: isNum
+            }
+        ])
+        .then(function (answers) {
+            connection.query("SELECT * FROM products WHERE ?", { id: answers.product }, function (err, res) {
+                if (err) throw err;
 
-            // However, if your store does have enough of the product...
-            // This means updating the SQL database to reflect the remaining quantity
-                //update item by id and make stock_quantity = to current - units
-            // Once the update goes through, show the customer the total cost of their purchase.
-                //console log units * item price
+                var item = res[0];
+
+                // check if store has enough of the product 
+                if (item.stock_quantity >= answers.unit) {
+
+                    //update quantity in db
+                    var remainingStock = item.stock_quantity - answers.unit;
+
+                    connection.query("UPDATE products SET ? WHERE ?",
+                        [
+                            { stock_quantity: remainingStock },
+                            { id: answers.product }
+                        ],
+                        //log total cost
+                        function (err, res) {
+                            console.log(`Total cost: ${(answers.unit) * item.price}`);
+                        });
+                }
+                // if not enough quantity, give user message
+                else {
+                    console.log("Insufficient quantity");
+                }
+            });
+            connection.end();
         });
 }
 
