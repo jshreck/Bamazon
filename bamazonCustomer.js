@@ -1,5 +1,6 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+var Table = require('cli-table');
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -9,25 +10,30 @@ var connection = mysql.createConnection({
     database: "bamazonDB"
 });
 
-connection.connect(function (err) {
+connection.connect((err) => {
     if (err) throw err;
     displayItems();
 });
 
 function displayItems() {
-    connection.query("SELECT * FROM products", function (err, res) {
+    connection.query("SELECT * FROM products", (err, res) => {
         if (err) throw err;
 
-        res.forEach(function (item) {
-            console.log(`${item.id} ${item.product_name}, $${item.price}`);
+        var table = new Table({
+            head: ["Item ID", "Name", "Price"]
         });
+
+        res.forEach((item) => {
+            table.push([item.id, item.product_name, item.price]);
+        });
+        console.log(table.toString());
         promptCustomer();
     });
 }
 
-//for validating answers in promptCustomer()
-function isNum(num) {
-    return (isNaN(parseInt(num)) ? "Please type in an integer" : true);
+//for validating answers are integers in promptCustomer()
+function isInt(int) {
+    return (isNaN(parseInt(int)) ? "Please type in an integer" : true);
 }
 
 function promptCustomer() {
@@ -37,17 +43,17 @@ function promptCustomer() {
                 name: "product",
                 type: "input",
                 message: "Please give the id of the item you would like to buy.",
-                validate: isNum
+                validate: isInt
             },
             {
                 name: "unit",
                 type: "input",
                 message: "How many units of this item would you like to buy?",
-                validate: isNum
+                validate: isInt
             }
         ])
-        .then(function (answers) {
-            connection.query("SELECT * FROM products WHERE ?", { id: answers.product }, function (err, res) {
+        .then((answers) => {
+            connection.query("SELECT * FROM products WHERE ?", { id: answers.product }, (err, res) => {
                 if (err) throw err;
 
                 var item = res[0];
@@ -60,20 +66,26 @@ function promptCustomer() {
 
                     connection.query("UPDATE products SET ? WHERE ?",
                         [
-                            { stock_quantity: remainingStock },
-                            { id: answers.product }
+                            { 
+                                stock_quantity: remainingStock 
+                            },
+                            { 
+                                id: answers.product 
+                            }
                         ],
                         //log total cost
-                        function (err, res) {
-                            console.log(`Total cost: ${(answers.unit) * item.price}`);
+                        (err, res) => {
+                            if (err) throw err;
+                            console.log(`Total cost: $${(answers.unit) * item.price}`);
                         });
                 }
+
                 // if not enough quantity, give user message
                 else {
                     console.log("Insufficient quantity");
                 }
+                connection.end();    
             });
-            connection.end();
         });
 }
 

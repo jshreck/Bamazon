@@ -1,5 +1,6 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+var Table = require('cli-table');
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -9,15 +10,15 @@ var connection = mysql.createConnection({
     database: "bamazonDB"
 });
 
-connection.connect(function (err) {
+connection.connect((err) => {
     if (err) throw err;
     displayOptions();
 });
 
 
-//for validations
-function isNum(num) {
-    return (isNaN(parseInt(num)) ? "Please type in an integer" : true);
+//for validating if answer is and integer
+function isInt(int) {
+    return (isNaN(parseInt(int)) ? "Please type in an integer" : true);
 }
 
 function displayOptions() {
@@ -29,7 +30,7 @@ function displayOptions() {
             choices: ["View Products for Sale", "View Low Inventory", "Add to Inventory", "Add New Product", new inquirer.Separator(), "Exit"]
         }
     ])
-        .then(function (answer) {
+        .then((answer) => {
             switch (answer.options) {
 
                 case "View Products for Sale":
@@ -56,27 +57,37 @@ function displayOptions() {
 
 //lists all items for sale
 function listItems() {
-    connection.query("SELECT * FROM products", function (err, res) {
+    connection.query("SELECT * FROM products", (err, res) => {
         if (err) throw err;
 
-        res.forEach(function (item) {
-            console.log(`
-            ${item.id} ${item.product_name}, $${item.price}, ${item.stock_quantity} in stock`);
+        var table = new Table({
+            head: ["Item ID", "Name", "Price", "Quantity in Stock"]
         });
+
+        res.forEach((item) => {
+            table.push([item.id, item.product_name, item.price, item.stock_quantity]);
+        });
+
+        console.log(table.toString());
         next();
     });
 }
 
 //list all items with inventory count lower than 20
 function lowInventory() {
-    connection.query("SELECT * FROM products WHERE stock_quantity < 20", function (err, res) {
+    connection.query("SELECT * FROM products WHERE stock_quantity < 20", (err, res) => {
         if (err) throw err;
-        console.log(`
-        LOW INVENTORY:`);
-        res.forEach(function (item) {
-            console.log(`
-            ${item.product_name}, ID: ${item.id}, Quantity in stock: ${item.stock_quantity} `);
+
+        var table = new Table({
+            head: ["Item ID", "Name", "Quantity in Stock"]
         });
+
+        res.forEach((item) => {
+            table.push([item.id, item.product_name, item.stock_quantity]);
+        });
+        
+        console.log("LOW INVENTORY:")
+        console.log(table.toString());
         next();
     });
 }
@@ -89,21 +100,20 @@ function addInventory() {
             name: "id",
             type: "input",
             message: "\nWhat is the id of the product you wish to add inventory to?",
-            validate: isNum
+            validate: isInt
         },
         {
             name: "quantity",
             type: "input",
             message: "\nHow many units would you like to add to inventory?",
-            validate: isNum
+            validate: isInt
         }
     ])
-        .then(function (answers) {
+        .then((answers) => {
 
-            connection.query("SELECT * FROM products WHERE ?", { id: answers.id }, function (err, res) {
+            connection.query("SELECT * FROM products WHERE ?", { id: answers.id }, (err, res) => {
 
                 var newStock = res[0].stock_quantity + parseInt(answers.quantity);
-                console.log(typeof answers.quantity);
                 var name = res[0].product_name;
                 var id = res[0].id;
 
@@ -116,9 +126,16 @@ function addInventory() {
                             id: answers.id
                         }
                     ],
-                    function (err, res) {
+                    (err, res) => {
                         if (err) throw err;
-                        console.log(`Successfully added inventory to item id ${id}, ${name}. Quantity now in stock: ${newStock}`);
+
+                        var table = new Table({
+                            head: ["Item ID", "Name", "Quantity in Stock"]
+                        });
+                        table.push([id, name, newStock]);
+        
+                        console.log(table.toString());
+                        console.log("Successfully updated inventory!")
                         next();
                     });
             });
@@ -147,13 +164,11 @@ function newProduct() {
             name: "stock_quantity",
             type: "input",
             message: "\nHow many units would you like to add to inventory?",
-            validate: isNum
+            validate: isInt
         },
     ])
-        .then(function (answers) {
+        .then((answers) => {
 
-
-            //SOME SORT OF ERROR HERE
             connection.query("INSERT INTO products SET ?",
                 {
                     product_name: answers.product_name, 
@@ -161,9 +176,16 @@ function newProduct() {
                     price: answers.price, 
                     stock_quantity: answers.stock_quantity
                 },
-                function (err, res) {
+                (err, res) => {
                     if (err) throw err;
-                    console.log(`Successfully added new item to inventory`);
+                    
+                    var table = new Table({
+                        head: ["Name", "Department", "Price", "Quantity in Stock"]
+                    });
+                    table.push([answers.product_name, answers.department_name, answers.price, answers. stock_quantity])
+
+                    console.log(table.toString());
+                    console.log("Successfully added new item to inventory!");
                     next();
                 });   
         });
@@ -179,7 +201,7 @@ function next() {
             choices: ["Yes", "Exit"]
         }
     ])
-        .then(function (answer) {
+        .then((answer) => {
             switch (answer.next) {
 
                 case "Yes":
