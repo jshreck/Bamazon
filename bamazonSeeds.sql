@@ -8,7 +8,8 @@ CREATE TABLE products (
   product_name VARCHAR(250) NOT NULL,
   department_name VARCHAR(250),
   price DECIMAL (10,2) NOT NULL,
-  stock_quantity INT
+  stock_quantity INT,
+  product_sales DECIMAL (10,2) DEFAULT 0
 );
 
 INSERT INTO products (product_name, department_name, price, stock_quantity)
@@ -23,3 +24,16 @@ VALUES
 ("pet rock", "miscellaneous", 5.00, 100),
 ("bouncy castle", "games", 250.00, 12),
 ("disco ball", "party supplies", 50.00, 250);
+
+CREATE TABLE departments (
+  department_id INT(4) ZEROFILL NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  department_name VARCHAR(250) NOT NULL,
+  over_head_costs DECIMAL (10,2) NOT NULL
+);
+
+INSERT INTO departments (department_name, over_head_costs)
+VALUES 
+("home", 1000),
+("party supplies", 200),
+("miscellaneous", 1000),
+("games", 200);

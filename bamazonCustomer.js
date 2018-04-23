@@ -24,7 +24,7 @@ function displayItems() {
         });
 
         res.forEach((item) => {
-            table.push([item.id, item.product_name, item.price]);
+            table.push([item.id, item.product_name, `$${item.price.toFixed(2)}`]);
         });
         console.log(table.toString());
         promptCustomer();
@@ -53,7 +53,7 @@ function promptCustomer() {
             }
         ])
         .then((answers) => {
-            connection.query("SELECT * FROM products WHERE ?", { id: answers.product }, (err, res) => {
+            connection.query("SELECT * FROM products WHERE ?", {id: answers.product}, (err, res) => {
                 if (err) throw err;
 
                 var item = res[0];
@@ -63,11 +63,14 @@ function promptCustomer() {
 
                     //update quantity in db
                     var remainingStock = item.stock_quantity - answers.unit;
+                    var totalCost = (answers.unit * item.price);
+                    var totalSales = item.product_sales + Number(totalCost);
 
                     connection.query("UPDATE products SET ? WHERE ?",
                         [
                             { 
-                                stock_quantity: remainingStock 
+                                stock_quantity: remainingStock, 
+                                product_sales: totalSales
                             },
                             { 
                                 id: answers.product 
@@ -76,7 +79,7 @@ function promptCustomer() {
                         //log total cost
                         (err, res) => {
                             if (err) throw err;
-                            console.log(`Total cost: $${(answers.unit) * item.price}`);
+                            console.log(`Total cost: $${totalCost}`);
                         });
                 }
 

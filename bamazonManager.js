@@ -27,7 +27,7 @@ function displayOptions() {
             name: "options",
             type: "list",
             message: "\nWhat would you like to do?",
-            choices: ["View Products for Sale", "View Low Inventory", "Add to Inventory", "Add New Product", new inquirer.Separator(), "Exit"]
+            choices: ["View Products for Sale", "View Low Inventory", "Add to Existing Inventory", "Add New Product", new inquirer.Separator(), "Exit"]
         }
     ])
         .then((answer) => {
@@ -41,7 +41,7 @@ function displayOptions() {
                     lowInventory();
                     break;
 
-                case "Add to Inventory":
+                case "Add to Existing Inventory":
                     addInventory();
                     break;
 
@@ -65,7 +65,7 @@ function listItems() {
         });
 
         res.forEach((item) => {
-            table.push([item.id, item.product_name, item.price, item.stock_quantity]);
+            table.push([item.id, item.product_name, `$${item.price.toFixed(2)}`, item.stock_quantity]);
         });
 
         console.log(table.toString());
@@ -159,6 +159,9 @@ function newProduct() {
             name: "price",
             type: "input",
             message: "\nWhat is the price of the item?",
+            validate:(num) => {
+                return (isNaN(num) ? "Please type in a number" : true);
+            }
         },
         {
             name: "stock_quantity",
@@ -182,7 +185,9 @@ function newProduct() {
                     var table = new Table({
                         head: ["Name", "Department", "Price", "Quantity in Stock"]
                     });
-                    table.push([answers.product_name, answers.department_name, answers.price, answers. stock_quantity])
+
+                    var price = Number(answers.price).toFixed(2);
+                    table.push([answers.product_name, answers.department_name, `$${price}`, answers.stock_quantity])
 
                     console.log(table.toString());
                     console.log("Successfully added new item to inventory!");
