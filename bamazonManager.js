@@ -16,7 +16,7 @@ connection.connect((err) => {
 });
 
 
-//for validating if answer is and integer
+//for validating if answer is an integer
 function isInt(int) {
     return (isNaN(parseInt(int)) ? "Please type in an integer" : true);
 }
